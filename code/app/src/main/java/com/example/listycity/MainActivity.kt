@@ -4,13 +4,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.listycity.ui.theme.ListyCityTheme
 
 class MainActivity : ComponentActivity() {
@@ -24,6 +26,7 @@ class MainActivity : ComponentActivity() {
                     CityListScreen(
                         cities = cityRepository.cities,
                         onAddCity = {cityRepository.addCity(it)},
+                        onRemoveCity = {cityRepository.removeCity(it)},
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -33,44 +36,53 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+fun CityListScreen(cities: List<String>, onAddCity: (String) -> Unit, onRemoveCity: (String) -> Unit, modifier: Modifier = Modifier) {
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ListyCityTheme {
-        Greeting("Android")
-    }
-}
+    var newCityName by remember { mutableStateOf("") }
+    var selectedCityName by remember { mutableStateOf<String?>(null) }
 
-@Composable
-fun CityRow() {
+    Column(modifier = modifier.fillMaxSize()) {
+        Row(modifier = Modifier.padding(all = 16.dp)) {
+            OutlinedTextField(
+                value = newCityName,
+                onValueChange = { newCityName = it },
+                label = { Text("City name") },
+                modifier = Modifier.weight(1f)
+            )
 
-    Text(
-        text=city,
-        fontSize = 28.sp,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp)
-    )
+            Spacer(modifier = Modifier.width(8.dp))
 
+            Button(
+                onClick = {
+                    if (newCityName.isNotBlank()) {
+                        onAddCity(newCityName)
+                        newCityName = ""
+                    }
+                }
+            ) {
+                Text("Add City")
+            }
+            Button(
+                onClick = {
 
-
-}
-@Composable
-fun CityListScreen(cities: List<String>, onAddCity: (String) -> Unit, modifier: Modifier = Modifier) {
-
-    var newCityName by remember {mutableStateOf("")}
-
-    LazyColumn(modifier = modifier.fillMaxSize()) {
-
-        items(cities) { city ->
-            CityRow(city = city)
+                }
+            ) {
+                Text("Delete City")
+            }
         }
 
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            items(cities) { city ->
+                val isSelected = city == selectedCityName
+                Text(
+                    text=city,
+                    fontSize = 28.sp,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp)
+                        .selectable(selected = isSelected, onClick={selectedCityName = city})
+                )
+
+            }
+        }
     }
 
 }
@@ -88,6 +100,10 @@ class CityRepository {
 
     val cities: List<String>
         get() = _cities
+
+    fun removeCity(city: String) {
+        _cities.removeAll {it == city}
+    }
 
     fun addCity(city: String) {
         _cities.add(city)
